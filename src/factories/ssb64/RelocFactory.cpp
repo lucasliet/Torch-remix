@@ -170,10 +170,15 @@ SSB64::RelocFactory::parse(std::vector<uint8_t>& buffer, YAML::Node& node) {
     std::vector<uint8_t> decompressed;
 
     if (isCompressed) {
-        decompressed.resize(decompressedSizeBytes);
+        // Remix has VPK0 streams whose header size is not word-aligned; the
+        // table only stores words, so decode at the header size and truncate
+        // to the table size (what the original DMA path loads).
+        uint32_t headerSizeBytes = vpk0_decoded_size(fileData, compressedSizeBytes);
+        decompressed.resize(std::max<size_t>(decompressedSizeBytes, headerSizeBytes));
 
         uint32_t result = vpk0_decode(fileData, compressedSizeBytes,
-                                       decompressed.data(), decompressedSizeBytes);
+                                       decompressed.data(), decompressed.size());
+        decompressed.resize(decompressedSizeBytes);
         if (result == 0) {
             throw std::runtime_error(
                 "VPK0 decompression failed for file " + std::to_string(fileId) +

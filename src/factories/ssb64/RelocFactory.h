@@ -27,11 +27,17 @@ struct RelocLayout {
     uint32_t dataStart;   // tableRomAddr + tableSize
 };
 
+// Smash Remix reports country 'E' like vanilla US but ships an expanded ROM
+// (0x3E80000 bytes vs 0x1000000) with the same table address and 5455 files.
+static constexpr size_t VANILLA_ROM_SIZE = 0x1000000;
+
 inline RelocLayout GetRelocLayout(const std::vector<uint8_t>& rom) {
     uint8_t country = rom.size() > ROM_COUNTRY_CODE_OFF
                           ? rom[ROM_COUNTRY_CODE_OFF] : (uint8_t)'E';
     uint32_t addr, count;
-    switch (country) {
+    if (country == 'E' && rom.size() > VANILLA_ROM_SIZE) {
+        addr = 0x001AC870u; count = 5455u; // Smash Remix 2.0.1
+    } else switch (country) {
         case 'J': addr = 0x001ACAF0u; count = 2107u; break; // NALJ
         case 'E':
         default:  addr = 0x001AC870u; count = 2132u; break; // NALE (US v1.0)

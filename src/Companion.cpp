@@ -99,6 +99,9 @@
 
 #ifdef SSB64_SUPPORT
 #include "factories/ssb64/RelocFactory.h"
+#include "factories/ssb64/RemixAudioFactory.h"
+#include "factories/ssb64/RemixBlobFactory.h"
+#include "factories/ssb64/RemixFightersFactory.h"
 #endif
 
 #ifdef NAUDIO_SUPPORT
@@ -242,6 +245,9 @@ void Companion::Init(const ExportType type, std::atomic<size_t>& assetCount) {
 
 #ifdef SSB64_SUPPORT
     this->RegisterFactory("SSB64:RELOC", std::make_shared<SSB64::RelocFactory>());
+    this->RegisterFactory("SSB64:REMIXFIGHTERS", std::make_shared<SSB64::RemixFightersFactory>());
+    this->RegisterFactory("SSB64:REMIXAUDIO", std::make_shared<SSB64::RemixAudioFactory>());
+    this->RegisterFactory("SSB64:REMIXBLOB", std::make_shared<SSB64::RemixBlobFactory>());
 #endif
 
 #ifdef NAUDIO_SUPPORT
