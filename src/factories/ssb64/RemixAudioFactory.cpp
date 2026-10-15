@@ -11,12 +11,12 @@
 namespace SSB64 {
 namespace {
 
-// Bank table pointer stored at music ctl + 4 (docs/remix/audio_extraction.md). Used as a ROM sanity check.
+// Bank table pointer stored at music ctl + 4: Remix moves the music bank map out of the vanilla blob. Used as a ROM sanity check.
 constexpr uint32_t REMIX_MUSIC_BANK_POINTER = 0x003C9EA0u;
 constexpr uint32_t REMIX_SBK_ROM = 0x02504750u;
 constexpr uint16_t REMIX_SBK_ENTRY_COUNT = 0x177;
 
-// Remix FGM segments (tools/remix_dump_audio.py, FGM.asm). The table pointers are relative to the blob start
+// Remix FGM segments (FGM.asm of the Remix source). The table pointers are relative to the blob start
 // when below the segment size, and RAM addresses relative to the moved map otherwise.
 constexpr uint32_t REMIX_FGM_UNK_ROM = 0x02934370u;
 constexpr uint32_t REMIX_FGM_UNK_SIZE = 0x820u;

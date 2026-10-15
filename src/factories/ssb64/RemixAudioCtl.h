@@ -7,7 +7,9 @@
 
 namespace SSB64 {
 
-// Addresses of one ctl bank, from docs/remix/audio_extraction.md (tools/remix_dump_audio.py).
+// Addresses of one ctl bank. ramBase is where the game DMAs the bank; every offset inside the bank is relative to it.
+// vanillaRom/vanillaLength is the vanilla blob (the bytes at the start of the runtime image), tblRom the sample data
+// (wavetable base offsets are relative to it).
 struct RemixCtlSpec {
     uint32_t ramBase;
     uint32_t vanillaRom;

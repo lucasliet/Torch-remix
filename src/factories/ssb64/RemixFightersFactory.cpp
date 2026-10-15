@@ -6,7 +6,14 @@
 namespace SSB64 {
 namespace {
 
-// Layout of remix/fighters (docs/remix/implementation_plan.md). Integers are little-endian.
+// Layout of the remix/fighters blob; integers are little-endian and the port reads it with the same constants.
+//   Header (16 bytes): u32 magic 'RMXF', u32 version, u32 fighter count, u32 reserved.
+//   Records: count x 0x80 bytes, in struct-table order (index = Remix fighter id):
+//     +0x00 remix id, +0x04 file ids[9] (main, mainmotion, submotion, model, shieldpose, special1..4),
+//     +0x28 main file size, +0x2C attributes offset, +0x30 anim file size,
+//     +0x34 main motion count, +0x38 main motion offset, +0x3C menu motion count, +0x40 menu motion offset;
+//     the rest of the record is zero. Offsets are bytes from the start of the motion arrays that follow the records.
+//   Motion arrays: 12 bytes each, u32 anim file id, u32 command offset, u32 flags.
 constexpr uint32_t REMIX_FIGHTERS_MAGIC = 0x46584D52u;  // bytes 'R' 'M' 'X' 'F'
 constexpr uint32_t REMIX_FIGHTERS_VERSION = 1;
 constexpr size_t REMIX_FIGHTERS_RECORD_SIZE = 0x80;
