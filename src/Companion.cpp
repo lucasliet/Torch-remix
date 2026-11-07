@@ -162,7 +162,12 @@ void Companion::Init(const ExportType type) {
 
 void Companion::Init(const ExportType type, std::atomic<size_t>& assetCount) {
 
+#ifdef __PS5__
+    // Every log write to the console's storage costs tens of milliseconds.
+    spdlog::set_level(spdlog::level::warn);
+#else
     spdlog::set_level(spdlog::level::debug);
+#endif
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
 
     this->gConfig.exporterType = type;
