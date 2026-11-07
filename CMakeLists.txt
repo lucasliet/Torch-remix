@@ -242,6 +242,16 @@ FetchContent_Declare(
 )
 set(YAML_CPP_BUILD_TESTS OFF)
 FetchContent_MakeAvailable(yaml-cpp)
+if(CMAKE_SYSTEM_NAME STREQUAL "PS5")
+    # The PS5 title libc crashes building a named locale (SIGBUS in std::locale("C")); the
+    # classic locale is the same "C" locale without the lookup.
+    set(YAML_CPP_CONVERT_HEADER ${yaml-cpp_SOURCE_DIR}/include/yaml-cpp/node/convert.h)
+    file(READ ${YAML_CPP_CONVERT_HEADER} YAML_CPP_CONVERT_SOURCE)
+    string(REPLACE "std::locale(\"C\")" "std::locale::classic()" YAML_CPP_CONVERT_PATCHED "${YAML_CPP_CONVERT_SOURCE}")
+    if(NOT YAML_CPP_CONVERT_PATCHED STREQUAL YAML_CPP_CONVERT_SOURCE)
+        file(WRITE ${YAML_CPP_CONVERT_HEADER} "${YAML_CPP_CONVERT_PATCHED}")
+    endif()
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
 if(NOT USE_STANDALONE)
