@@ -1390,12 +1390,8 @@ void Companion::Process(std::atomic<size_t>& assetCount) {
         vWriter.Write((uint32_t)0);
     }
 
-    for (const auto& entry : Torch::getRecursiveEntries(this->gAssetPath)) {
-        if (entry.is_directory()) {
-            continue;
-        }
-
-        const auto yamlPath = entry.path().generic_string();
+    for (const auto& entryPath : Torch::getRecursiveFiles(this->gAssetPath)) {
+        const auto yamlPath = entryPath.generic_string();
 
         if (yamlPath.find(".yaml") == std::string::npos && yamlPath.find(".yml") == std::string::npos) {
             continue;
@@ -1406,7 +1402,7 @@ void Companion::Process(std::atomic<size_t>& assetCount) {
         }
 
         YAML::Node root = YAML::LoadFile(yamlPath);
-        this->gCurrentDirectory = relative(entry.path(), this->gAssetPath).replace_extension("");
+        this->gCurrentDirectory = relative(entryPath, this->gAssetPath).replace_extension("");
         this->gCurrentFile = yamlPath;
 
         if (!Torch::contains(this->gProcessedFiles, this->gCurrentFile)) {
@@ -1476,15 +1472,11 @@ void Companion::Pack(const std::string& folder, const std::string& output, const
     auto start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     std::unordered_map<std::string, std::vector<char>> files;
 
-    for (const auto& entry : Torch::getRecursiveEntries(folder)) {
-        if (entry.is_directory()) {
-            continue;
-        }
-
-        std::ifstream input(entry.path(), std::ios::binary);
+    for (const auto& entryPath : Torch::getRecursiveFiles(folder)) {
+        std::ifstream input(entryPath, std::ios::binary);
         auto data = std::vector(std::istreambuf_iterator(input), {});
         input.close();
-        files[entry.path().generic_string()] = data;
+        files[entryPath.generic_string()] = data;
     }
 
     std::unique_ptr<BinaryWrapper> wrapper;

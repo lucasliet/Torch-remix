@@ -28,42 +28,35 @@ int getFileDepth(const fs::path& base, const fs::path& p) {
     return std::distance(base.begin(), p.begin());
 }
 
-// Some hosts cannot list their read-only app folder (a PS5 title's /app0 refuses opendir), so the
-// build may ship a manifest: one path per line, relative to the folder it sits in.
-static const char* kEntryManifestName = ".torch-filelist";
+// Some hosts cannot list or stat files in their read-only app folder (a PS5 title's /app0 refuses
+// opendir and stat), so the build may ship a manifest: one file path per line, relative to the
+// folder it sits in. Only opening the listed files touches the disk.
+static const char* kFileManifestName = ".torch-filelist";
 
-static bool readEntryManifest(const fs::path& baseDir, std::set<fs::directory_entry>& result) {
-    std::ifstream manifest(baseDir / kEntryManifestName);
+static bool readFileManifest(const fs::path& baseDir, std::set<fs::path>& result) {
+    std::ifstream manifest(baseDir / kFileManifestName);
     if (!manifest) {
         return false;
     }
     std::string relativePath;
     while (std::getline(manifest, relativePath)) {
-        if (relativePath.empty()) {
-            continue;
+        if (!relativePath.empty()) {
+            result.insert(baseDir / relativePath);
         }
-        std::error_code ec;
-        fs::directory_entry entry(baseDir / relativePath, ec);
-        if (ec) {
-            throw std::runtime_error("Entry " + relativePath + " of " + (baseDir / kEntryManifestName).string() +
-                                     " cannot be read: " + ec.message());
-        }
-        result.insert(entry);
     }
     return true;
 }
 
-std::vector<fs::directory_entry> Torch::getRecursiveEntries(const fs::path baseDir) {
-    std::set<fs::directory_entry> result;
+std::vector<fs::path> Torch::getRecursiveFiles(const fs::path baseDir) {
+    std::set<fs::path> result;
 
-    if (readEntryManifest(baseDir, result)) {
-        return std::vector<fs::directory_entry>(result.begin(), result.end());
+    if (!readFileManifest(baseDir, result)) {
+        for (const auto& entry : fs::recursive_directory_iterator(baseDir)) {
+            if (!entry.is_directory()) {
+                result.insert(entry.path());
+            }
+        }
     }
 
-    for (const auto& entry : fs::recursive_directory_iterator(baseDir)) {
-        result.insert(entry);
-    }
-
-    std::vector<fs::directory_entry> sortedEntries(result.begin(), result.end());
-    return sortedEntries;
+    return std::vector<fs::path>(result.begin(), result.end());
 }
