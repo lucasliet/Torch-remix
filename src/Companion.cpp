@@ -127,6 +127,12 @@
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
+// Computed from the path text only: std::filesystem::relative resolves symlinks with lstat, which
+// some hosts refuse in their read-only app folder (a PS5 title's /app0).
+static fs::path RelativeToAssetPath(const fs::path& path, const fs::path& assetPath) {
+    return path.lexically_normal().lexically_relative(assetPath.lexically_normal());
+}
+
 static const std::string regular = "[%Y-%m-%d %H:%M:%S.%e] [%l] %v";
 static const std::string line = "[%Y-%m-%d %H:%M:%S.%e] [%l] > %v";
 
@@ -413,11 +419,11 @@ void Companion::ParseCurrentFileConfig(YAML::Node node, std::atomic<size_t>& ass
                 }
 
                 std::string externalFileName = (this->gSourceDirectory / externalFile.as<std::string>()).string();
-                if (StringHelper::StartsWith(std::filesystem::relative(externalFileName, this->gAssetPath).string(),
+                if (StringHelper::StartsWith(RelativeToAssetPath(externalFileName, this->gAssetPath).string(),
                                              "../")) {
                     throw std::runtime_error("External File " + externalFileName + " Not In Asset Directory " +
                                              this->gAssetPath);
-                } else if (std::filesystem::relative(externalFileName, this->gAssetPath).string() == "") {
+                } else if (RelativeToAssetPath(externalFileName, this->gAssetPath).string() == "") {
                     throw std::runtime_error("External File " + externalFileName + " Not In Asset Directory " +
                                              this->gAssetPath);
                 }
@@ -431,7 +437,7 @@ void Companion::ParseCurrentFileConfig(YAML::Node node, std::atomic<size_t>& ass
 
                     this->gCurrentFile = externalFileName;
                     this->gCurrentDirectory =
-                        std::filesystem::relative(externalFileName, this->gAssetPath).replace_extension("");
+                        RelativeToAssetPath(externalFileName, this->gAssetPath).replace_extension("");
 
                     YAML::Node root = YAML::LoadFile(externalFileName);
 
@@ -1402,7 +1408,7 @@ void Companion::Process(std::atomic<size_t>& assetCount) {
         }
 
         YAML::Node root = YAML::LoadFile(yamlPath);
-        this->gCurrentDirectory = relative(entryPath, this->gAssetPath).replace_extension("");
+        this->gCurrentDirectory = RelativeToAssetPath(entryPath, this->gAssetPath).replace_extension("");
         this->gCurrentFile = yamlPath;
 
         if (!Torch::contains(this->gProcessedFiles, this->gCurrentFile)) {
